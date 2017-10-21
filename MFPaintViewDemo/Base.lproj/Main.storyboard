@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16C67" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="MFPaintViewDemo" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="02h-RF-Jea" customClass="MFPaintView" customModule="MFPaintViewDemo" customModuleProvider="target">
+                                <rect key="frame" x="16" y="20" width="343" height="597"/>
+                            </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nUU-mt-T4m">
+                                <rect key="frame" x="16" y="637" width="46" height="30"/>
+                                <state key="normal" title="橡皮擦"/>
+                                <connections>
+                                    <action selector="onEraserClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="6U2-E3-PwZ"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Mr7-PK-d5J">
+                                <rect key="frame" x="72" y="637" width="31" height="30"/>
+                                <state key="normal" title="红色">
+                                    <color key="titleColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="onRedClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="WaF-q2-oYs"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lHh-Nz-maL">
+                                <rect key="frame" x="113" y="637" width="31" height="30"/>
+                                <state key="normal" title="绿色">
+                                    <color key="titleColor" red="0.024761829763913834" green="1" blue="0.12358827436653896" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="onGreenClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="AIJ-3w-UPI"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="t5F-wt-xdq">
+                                <rect key="frame" x="154" y="637" width="46" height="30"/>
+                                <state key="normal" title="大笔触"/>
+                                <connections>
+                                    <action selector="onBigBrushClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Dql-6M-Bdx"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TMj-Rr-aUA">
+                                <rect key="frame" x="210" y="637" width="46" height="30"/>
+                                <state key="normal" title="小笔触"/>
+                                <connections>
+                                    <action selector="onSmallBrushClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="2Me-6j-mOl"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sv2-zL-hND">
+                                <rect key="frame" x="266" y="637" width="31" height="30"/>
+                                <state key="normal" title="清除"/>
+                                <connections>
+                                    <action selector="onCleanupClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="lcN-P8-iEI"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="Mr7-PK-d5J" firstAttribute="bottom" secondItem="nUU-mt-T4m" secondAttribute="bottom" id="3Uv-hm-bOo"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="nUU-mt-T4m" secondAttribute="bottom" id="3wv-GF-84o"/>
+                            <constraint firstItem="TMj-Rr-aUA" firstAttribute="bottom" secondItem="nUU-mt-T4m" secondAttribute="bottom" id="5s0-as-OtH"/>
+                            <constraint firstItem="02h-RF-Jea" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="6Is-2W-YS0"/>
+                            <constraint firstItem="lHh-Nz-maL" firstAttribute="bottom" secondItem="nUU-mt-T4m" secondAttribute="bottom" id="7bu-Ss-34I"/>
+                            <constraint firstItem="Mr7-PK-d5J" firstAttribute="leading" secondItem="nUU-mt-T4m" secondAttribute="trailing" constant="10" id="AZd-Y6-UNq"/>
+                            <constraint firstItem="nUU-mt-T4m" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="D0L-y2-2U0"/>
+                            <constraint firstItem="sv2-zL-hND" firstAttribute="leading" secondItem="TMj-Rr-aUA" secondAttribute="trailing" constant="10" id="DPc-gT-5qF"/>
+                            <constraint firstItem="sv2-zL-hND" firstAttribute="bottom" secondItem="nUU-mt-T4m" secondAttribute="bottom" id="HD8-mZ-3Sk"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="02h-RF-Jea" secondAttribute="trailing" id="PRX-M4-YVh"/>
+                            <constraint firstItem="t5F-wt-xdq" firstAttribute="leading" secondItem="lHh-Nz-maL" secondAttribute="trailing" constant="10" id="cEL-w2-LKT"/>
+                            <constraint firstItem="t5F-wt-xdq" firstAttribute="bottom" secondItem="nUU-mt-T4m" secondAttribute="bottom" id="gjc-Tm-CFn"/>
+                            <constraint firstItem="TMj-Rr-aUA" firstAttribute="leading" secondItem="t5F-wt-xdq" secondAttribute="trailing" constant="10" id="hwA-VV-egM"/>
+                            <constraint firstItem="lHh-Nz-maL" firstAttribute="leading" secondItem="Mr7-PK-d5J" secondAttribute="trailing" constant="10" id="pL2-Vq-aM1"/>
+                            <constraint firstItem="02h-RF-Jea" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="zPC-gb-uCm"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="02h-RF-Jea" secondAttribute="bottom" constant="50" id="zUL-aH-Ixb"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="paintView" destination="02h-RF-Jea" id="Biy-58-8X0"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+    </scenes>
+</document>
