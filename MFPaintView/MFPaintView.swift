@@ -99,9 +99,15 @@ class MFPaintView: UIView {
         let midPoint = CGPoint(x:(prePoint.x + currentPoint.x) * 0.5,
                                y: (prePoint.y + currentPoint.y) * 0.5)
         
-        
-        self.currentPath?.addQuadCurve(to: midPoint, controlPoint: prePoint)
-        
+        if (self.needsCorrectCurve(currentPoint: (self.currentPath?.currentPoint)!, endPoint: midPoint, controlPoint: prePoint, lineWidth: (self.currentPath?.lineWidth)!)) {
+                        
+            self.currentPath?.addLine(to: prePoint)
+            self.currentPath?.addLine(to: midPoint)
+        }
+        else {
+            self.currentPath?.addQuadCurve(to: midPoint, controlPoint: prePoint)
+        }
+ 
         self.setNeedsDisplay()
     }
     
@@ -205,7 +211,7 @@ class MFPaintView: UIView {
     
     /// 是否可以进行重做
     ///
-    /// - Returns: 或否
+    /// - Returns: 是或否
     public func canRedo() -> Bool {
     
         return self.undoPaths.count > 0;
@@ -216,13 +222,44 @@ class MFPaintView: UIView {
         
         self.backgroundColor = UIColor.clear
     }
+    
+    /// 检查贝塞尔曲线角度是否过小，过小则需要修正
+    ///
+    /// - Parameters:
+    ///   - currentPoint: 曲线出发点
+    ///   - endPoint: 曲线结束点
+    ///   - controlPoint: 曲线控制点
+    ///   - lineWidth: 线宽
+    /// - Returns: 是或否
+    private func needsCorrectCurve(currentPoint: CGPoint, endPoint: CGPoint, controlPoint: CGPoint, lineWidth: CGFloat) -> Bool {
+
+        let angle = self.getAnglesWithThreePoint(startPoint: currentPoint, centerPoint: controlPoint, endPoint: endPoint)
+        
+        return (angle < CGFloat.pi / 20)
+    }
+    
+    /// 获取三个点的角度
+    ///
+    /// - Parameters:
+    ///   - startPoint: 角度起始点
+    ///   - centerPoint: 角度中间点
+    ///   - endPoint: 角度终点
+    /// - Returns: 角的弧度0～π
+    private func getAnglesWithThreePoint(startPoint: CGPoint, centerPoint: CGPoint, endPoint: CGPoint) -> CGFloat {
+    
+        let x1 = startPoint.x - centerPoint.x
+        let y1 = startPoint.y - centerPoint.y;
+        let x2 = endPoint.x - centerPoint.x;
+        let y2 = endPoint.y - centerPoint.y;
+        
+        let x = x1 * x2 + y1 * y2;
+        let y = x1 * y2 - x2 * y1;
+        
+        let angle = acos(x/sqrt(x*x+y*y));
+        
+        return angle;
+    }
 }
-
-
-
-
-
-
 
 
 
