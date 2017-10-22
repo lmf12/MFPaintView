@@ -13,6 +13,11 @@ enum MFPaintViewBrushMode {
     case eraser
 }
 
+protocol MFPaintViewDelegate {
+    
+    func paintViewDidFinishDrawLine(_ paintView: MFPaintView);
+}
+
 class MFPaintView: UIView {
     
     // MARK: - super property
@@ -24,12 +29,14 @@ class MFPaintView: UIView {
     }
     
     // MARK: - public property
+    public var delegate: MFPaintViewDelegate?
     private var paintLineWidth: CGFloat = 1.0
     private var paintStrokeColor: UIColor = UIColor.black
     private var isEraserMode: Bool = false
     
     // MARK: - private property
     private var paths = [MFBezierPath]()
+    private var undoPaths = [MFBezierPath]() //被撤销的路径
     private var currentPath: MFBezierPath?
 
     // MARK: - super methods
@@ -72,6 +79,7 @@ class MFPaintView: UIView {
         self.currentPath?.lineJoinStyle = CGLineJoin.round
         
         self.paths.append(self.currentPath!)
+        self.undoPaths.removeAll()
         
         let point:CGPoint = (event?.allTouches?.first?.location(in: self))!
         self.currentPath?.move(to: point)
@@ -109,6 +117,8 @@ class MFPaintView: UIView {
         self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
         
         self.setNeedsDisplay()
+        
+        self.delegate?.paintViewDidFinishDrawLine(self)
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -123,6 +133,8 @@ class MFPaintView: UIView {
         self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
         
         self.setNeedsDisplay()
+        
+        self.delegate?.paintViewDidFinishDrawLine(self)
     }
     
     // MARK: - public methods
@@ -143,7 +155,6 @@ class MFPaintView: UIView {
         self.paintStrokeColor = color;
     }
     
-    
     /// 设置笔刷模式
     ///
     /// - Parameter mode: 画笔或橡皮擦
@@ -156,7 +167,48 @@ class MFPaintView: UIView {
     public func cleanup() {
         
         self.paths.removeAll()
+        self.undoPaths.removeAll()
         self.setNeedsDisplay()
+    }
+    
+    /// 撤销上一步操作
+    public func undo() {
+    
+        if (!self.canUndo()) {
+            return
+        }
+        
+        let path = self.paths.removeLast()
+        self.undoPaths.append(path)
+        self.setNeedsDisplay()
+    }
+    
+    /// 重做撤销的操作
+    public func redo() {
+        
+        if (!self.canRedo()) {
+            return
+        }
+        
+        let path = self.undoPaths.removeLast()
+        self.paths.append(path)
+        self.setNeedsDisplay()
+    }
+    
+    /// 是否可以进行撤销
+    ///
+    /// - Returns: 是或否
+    public func canUndo() -> Bool {
+    
+        return self.paths.count > 0;
+    }
+    
+    /// 是否可以进行重做
+    ///
+    /// - Returns: 或否
+    public func canRedo() -> Bool {
+    
+        return self.undoPaths.count > 0;
     }
     
     // MARK: - private methods

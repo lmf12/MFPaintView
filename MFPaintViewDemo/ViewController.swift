@@ -8,15 +8,20 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, MFPaintViewDelegate {
 
     @IBOutlet weak var paintView: MFPaintView!
+    @IBOutlet weak var btnUndo: UIButton!
+    @IBOutlet weak var btnRedo: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.paintView.setPaintLineColor(lineColor: UIColor.red)
         self.paintView.setPaintLineWidth(lineWidth: 10.0)
+        self.paintView.delegate = self;
+        
+        self.refreshUndoAndRedoState()
     }
     
     // MARK: - action
@@ -50,6 +55,34 @@ class ViewController: UIViewController {
     @IBAction func onCleanupClick(_ sender: UIButton) {
         
         self.paintView.cleanup()
+        self.refreshUndoAndRedoState()
+    }
+    
+    @IBAction func onUndoClick(_ sender: UIButton) {
+        
+        self.paintView.undo()
+        self.refreshUndoAndRedoState()
+    }
+    
+    @IBAction func onRedoClick(_ sender: UIButton) {
+        
+        self.paintView.redo()
+        self.refreshUndoAndRedoState()
+    }
+    
+    // MARK: - MFPaintViewDelegate
+    func paintViewDidFinishDrawLine(_ paintView: MFPaintView) {
+        
+        self.refreshUndoAndRedoState()
+    }
+    
+    // MARK: - private methods
+    private func refreshUndoAndRedoState() {
+    
+        self.btnUndo.setTitleColor(paintView.canUndo() ? UIColor.blue : UIColor.gray,
+                                   for: UIControlState.normal)
+        self.btnRedo.setTitleColor(paintView.canRedo() ? UIColor.blue : UIColor.gray,
+                                   for: UIControlState.normal)
     }
     
 }
