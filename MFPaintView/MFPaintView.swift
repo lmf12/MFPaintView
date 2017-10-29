@@ -35,9 +35,9 @@ class MFPaintView: UIView {
     private var isEraserMode: Bool = false
     
     // MARK: - private property
-    private var paths = [MFBezierPath]()
-    private var undoPaths = [MFBezierPath]() //被撤销的路径
-    private var currentPath: MFBezierPath?
+    private var currentPath = MFBezierPath()
+    private var images = [UIImage]()
+    private var undoImages = [UIImage]() //被撤销的图像
 
     // MARK: - super methods
     override init(frame: CGRect) {
@@ -52,16 +52,17 @@ class MFPaintView: UIView {
     
     override func draw(_ rect: CGRect) {
         
-        for path in paths {
-            
-            if path.isEraser {
-                UIColor.clear.set()
-                path.stroke(with: CGBlendMode.clear, alpha: 1.0)
-            }
-            else {
-                path.lineColor.set()
-                path.stroke()
-            }
+        if images.count > 0 {
+            images.last?.draw(at: CGPoint.zero, blendMode: CGBlendMode.normal, alpha: 1.0)
+        }
+        
+        if self.currentPath.isEraser {
+            UIColor.clear.set()
+            self.currentPath.stroke(with: CGBlendMode.clear, alpha: 1.0)
+        }
+        else {
+            self.currentPath.lineColor.set()
+            self.currentPath.stroke()
         }
         
         super.draw(rect)
@@ -71,18 +72,16 @@ class MFPaintView: UIView {
 
         super.touchesBegan(touches, with: event)
         
-        self.currentPath = MFBezierPath()
-        self.currentPath?.lineColor = self.paintStrokeColor
-        self.currentPath?.lineWidth = self.paintLineWidth
-        self.currentPath?.isEraser = self.isEraserMode
-        self.currentPath?.lineCapStyle = CGLineCap.round
-        self.currentPath?.lineJoinStyle = CGLineJoin.round
-        
-        self.paths.append(self.currentPath!)
-        self.undoPaths.removeAll()
+        self.currentPath.lineColor = self.paintStrokeColor
+        self.currentPath.lineWidth = self.paintLineWidth
+        self.currentPath.isEraser = self.isEraserMode
+        self.currentPath.lineCapStyle = CGLineCap.round
+        self.currentPath.lineJoinStyle = CGLineJoin.round
+
+        self.undoImages.removeAll()
         
         let point:CGPoint = (event?.allTouches?.first?.location(in: self))!
-        self.currentPath?.move(to: point)
+        self.currentPath.move(to: point)
         
         self.setNeedsDisplay()
     }
@@ -98,15 +97,15 @@ class MFPaintView: UIView {
         let midPoint = CGPoint(x:(prePoint.x + currentPoint.x) * 0.5,
                                y: (prePoint.y + currentPoint.y) * 0.5)
         
-        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, midPoint, lineWidth: (self.currentPath?.lineWidth)!)
+        let needRefreshArea = self.areaContainsPoints(points: self.currentPath.currentPoint, prePoint, midPoint, lineWidth: self.currentPath.lineWidth)
         
-        if self.needsCorrectCurve(currentPoint: (self.currentPath?.currentPoint)!, endPoint: midPoint, controlPoint: prePoint, lineWidth: (self.currentPath?.lineWidth)!) {
+        if self.needsCorrectCurve(currentPoint: self.currentPath.currentPoint, endPoint: midPoint, controlPoint: prePoint, lineWidth: self.currentPath.lineWidth) {
                         
-            self.currentPath?.addLine(to: prePoint)
-            self.currentPath?.addLine(to: midPoint)
+            self.currentPath.addLine(to: prePoint)
+            self.currentPath.addLine(to: midPoint)
         }
         else {
-            self.currentPath?.addQuadCurve(to: midPoint, controlPoint: prePoint)
+            self.currentPath.addQuadCurve(to: midPoint, controlPoint: prePoint)
         }
  
         self.setNeedsDisplay(needRefreshArea)
@@ -116,36 +115,14 @@ class MFPaintView: UIView {
         
         super.touchesCancelled(touches, with: event)
         
-        let currentTouch = event?.allTouches?.first
-        
-        let currentPoint = (currentTouch?.location(in: self))!
-        let prePoint = (currentTouch?.previousLocation(in: self))!
-        
-        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, currentPoint, lineWidth: (self.currentPath?.lineWidth)!)
-        
-        self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
-        
-        self.setNeedsDisplay(needRefreshArea)
-        
-        self.delegate?.paintViewDidFinishDrawLine(self)
+        self.drawEnd(with: event)
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         
         super.touchesEnded(touches, with: event)
         
-        let currentTouch = event?.allTouches?.first
-        
-        let currentPoint = (currentTouch?.location(in: self))!
-        let prePoint = (currentTouch?.previousLocation(in: self))!
-        
-        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, currentPoint, lineWidth: (self.currentPath?.lineWidth)!)
-        
-        self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
-        
-        self.setNeedsDisplay(needRefreshArea)
-        
-        self.delegate?.paintViewDidFinishDrawLine(self)
+        self.drawEnd(with: event)
     }
     
     // MARK: - public methods
@@ -177,8 +154,9 @@ class MFPaintView: UIView {
     /// 清除画板
     public func cleanup() {
         
-        self.paths.removeAll()
-        self.undoPaths.removeAll()
+        self.currentPath.removeAllPoints()
+        self.images.removeAll()
+        self.undoImages.removeAll()
         self.setNeedsDisplay()
     }
     
@@ -189,8 +167,8 @@ class MFPaintView: UIView {
             return
         }
         
-        let path = self.paths.removeLast()
-        self.undoPaths.append(path)
+        let image = self.images.removeLast()
+        self.undoImages.append(image)
         self.setNeedsDisplay()
     }
     
@@ -201,8 +179,8 @@ class MFPaintView: UIView {
             return
         }
         
-        let path = self.undoPaths.removeLast()
-        self.paths.append(path)
+        let image = self.undoImages.removeLast()
+        self.images.append(image)
         self.setNeedsDisplay()
     }
     
@@ -211,7 +189,7 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     public func canUndo() -> Bool {
     
-        return self.paths.count > 0
+        return self.images.count > 0
     }
     
     /// 是否可以进行重做
@@ -219,13 +197,40 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     public func canRedo() -> Bool {
     
-        return self.undoPaths.count > 0
+        return self.undoImages.count > 0
     }
     
     // MARK: - private methods
     private func commonInit() {
         
         self.backgroundColor = UIColor.clear
+    }
+    
+    /// 单次绘画结束处理
+    ///
+    /// - Parameter event: 触摸事件
+    private func drawEnd(with event: UIEvent?) {
+        
+        let currentTouch = event?.allTouches?.first
+        
+        let currentPoint = (currentTouch?.location(in: self))!
+        let prePoint = (currentTouch?.previousLocation(in: self))!
+        
+        let needRefreshArea = self.areaContainsPoints(points: self.currentPath.currentPoint, prePoint, currentPoint, lineWidth: self.currentPath.lineWidth)
+        
+        self.currentPath.addQuadCurve(to: currentPoint, controlPoint: prePoint)
+        
+        self.setNeedsDisplay(needRefreshArea)
+        
+        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, UIScreen.main.scale)
+        self.layer.render(in: UIGraphicsGetCurrentContext()!)
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        self.images.append(image!)
+        self.currentPath.removeAllPoints()
+        
+        self.delegate?.paintViewDidFinishDrawLine(self)
     }
     
     /// 检查贝塞尔曲线角度是否过小，过小则需要修正
@@ -275,7 +280,7 @@ class MFPaintView: UIView {
     private func areaContainsPoints(points: CGPoint..., lineWidth: CGFloat) -> CGRect {
         
         if points.count == 0 {
-            return CGRect(x: 0, y: 0, width: 0, height: 0)
+            return CGRect.zero
         }
         
         var minX = points[0].x, minY = points[0].y, maxX = points[0].x, maxY = points[0].y
