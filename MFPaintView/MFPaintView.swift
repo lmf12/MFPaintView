@@ -15,7 +15,7 @@ enum MFPaintViewBrushMode {
 
 protocol MFPaintViewDelegate {
     
-    func paintViewDidFinishDrawLine(_ paintView: MFPaintView);
+    func paintViewDidFinishDrawLine(_ paintView: MFPaintView)
 }
 
 class MFPaintView: UIView {
@@ -54,7 +54,7 @@ class MFPaintView: UIView {
         
         for path in paths {
             
-            if (path.isEraser) {
+            if path.isEraser {
                 UIColor.clear.set()
                 path.stroke(with: CGBlendMode.clear, alpha: 1.0)
             }
@@ -91,15 +91,16 @@ class MFPaintView: UIView {
         
         super.touchesMoved(touches, with: event)
         
-        let currentTouch = event?.allTouches?.first;
+        let currentTouch = event?.allTouches?.first
         
         let currentPoint = (currentTouch?.location(in: self))!
         let prePoint = (currentTouch?.previousLocation(in: self))!
-        
         let midPoint = CGPoint(x:(prePoint.x + currentPoint.x) * 0.5,
                                y: (prePoint.y + currentPoint.y) * 0.5)
         
-        if (self.needsCorrectCurve(currentPoint: (self.currentPath?.currentPoint)!, endPoint: midPoint, controlPoint: prePoint, lineWidth: (self.currentPath?.lineWidth)!)) {
+        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, midPoint, lineWidth: (self.currentPath?.lineWidth)!)
+        
+        if self.needsCorrectCurve(currentPoint: (self.currentPath?.currentPoint)!, endPoint: midPoint, controlPoint: prePoint, lineWidth: (self.currentPath?.lineWidth)!) {
                         
             self.currentPath?.addLine(to: prePoint)
             self.currentPath?.addLine(to: midPoint)
@@ -108,21 +109,23 @@ class MFPaintView: UIView {
             self.currentPath?.addQuadCurve(to: midPoint, controlPoint: prePoint)
         }
  
-        self.setNeedsDisplay()
+        self.setNeedsDisplay(needRefreshArea)
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         
         super.touchesCancelled(touches, with: event)
         
-        let currentTouch = event?.allTouches?.first;
+        let currentTouch = event?.allTouches?.first
         
         let currentPoint = (currentTouch?.location(in: self))!
         let prePoint = (currentTouch?.previousLocation(in: self))!
         
+        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, currentPoint, lineWidth: (self.currentPath?.lineWidth)!)
+        
         self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
         
-        self.setNeedsDisplay()
+        self.setNeedsDisplay(needRefreshArea)
         
         self.delegate?.paintViewDidFinishDrawLine(self)
     }
@@ -131,14 +134,16 @@ class MFPaintView: UIView {
         
         super.touchesEnded(touches, with: event)
         
-        let currentTouch = event?.allTouches?.first;
+        let currentTouch = event?.allTouches?.first
         
         let currentPoint = (currentTouch?.location(in: self))!
         let prePoint = (currentTouch?.previousLocation(in: self))!
         
+        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, currentPoint, lineWidth: (self.currentPath?.lineWidth)!)
+        
         self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
         
-        self.setNeedsDisplay()
+        self.setNeedsDisplay(needRefreshArea)
         
         self.delegate?.paintViewDidFinishDrawLine(self)
     }
@@ -150,7 +155,7 @@ class MFPaintView: UIView {
     /// - Parameter width: 画笔或橡皮擦粗细
     public func setPaintLineWidth(lineWidth width: CGFloat) {
         
-        self.paintLineWidth = width;
+        self.paintLineWidth = width
     }
 
     /// 设置画笔颜色
@@ -158,7 +163,7 @@ class MFPaintView: UIView {
     /// - Parameter color: 画笔颜色
     public func setPaintLineColor(lineColor color: UIColor) {
         
-        self.paintStrokeColor = color;
+        self.paintStrokeColor = color
     }
     
     /// 设置笔刷模式
@@ -166,7 +171,7 @@ class MFPaintView: UIView {
     /// - Parameter mode: 画笔或橡皮擦
     public func setBrushMode(brushMode mode: MFPaintViewBrushMode) {
         
-        self.isEraserMode = mode == .eraser;
+        self.isEraserMode = mode == .eraser
     }
     
     /// 清除画板
@@ -180,7 +185,7 @@ class MFPaintView: UIView {
     /// 撤销上一步操作
     public func undo() {
     
-        if (!self.canUndo()) {
+        if !self.canUndo() {
             return
         }
         
@@ -192,7 +197,7 @@ class MFPaintView: UIView {
     /// 重做撤销的操作
     public func redo() {
         
-        if (!self.canRedo()) {
+        if !self.canRedo() {
             return
         }
         
@@ -206,7 +211,7 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     public func canUndo() -> Bool {
     
-        return self.paths.count > 0;
+        return self.paths.count > 0
     }
     
     /// 是否可以进行重做
@@ -214,7 +219,7 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     public func canRedo() -> Bool {
     
-        return self.undoPaths.count > 0;
+        return self.undoPaths.count > 0
     }
     
     // MARK: - private methods
@@ -233,7 +238,7 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     private func needsCorrectCurve(currentPoint: CGPoint, endPoint: CGPoint, controlPoint: CGPoint, lineWidth: CGFloat) -> Bool {
 
-        let angle = self.getAnglesWithThreePoint(startPoint: currentPoint, centerPoint: controlPoint, endPoint: endPoint)
+        let angle = self.anglesWithThreePoint(startPoint: currentPoint, centerPoint: controlPoint, endPoint: endPoint)
         
         return (angle < CGFloat.pi / 20)
     }
@@ -245,19 +250,53 @@ class MFPaintView: UIView {
     ///   - centerPoint: 角度中间点
     ///   - endPoint: 角度终点
     /// - Returns: 角的弧度0～π
-    private func getAnglesWithThreePoint(startPoint: CGPoint, centerPoint: CGPoint, endPoint: CGPoint) -> CGFloat {
+    private func anglesWithThreePoint(startPoint: CGPoint, centerPoint: CGPoint, endPoint: CGPoint) -> CGFloat {
     
         let x1 = startPoint.x - centerPoint.x
-        let y1 = startPoint.y - centerPoint.y;
-        let x2 = endPoint.x - centerPoint.x;
-        let y2 = endPoint.y - centerPoint.y;
+        let y1 = startPoint.y - centerPoint.y
+        let x2 = endPoint.x - centerPoint.x
+        let y2 = endPoint.y - centerPoint.y
         
-        let x = x1 * x2 + y1 * y2;
-        let y = x1 * y2 - x2 * y1;
+        let x = x1 * x2 + y1 * y2
+        let y = x1 * y2 - x2 * y1
         
-        let angle = acos(x/sqrt(x*x+y*y));
+        let angle = acos(x/sqrt(x*x+y*y))
         
-        return angle;
+        return angle
+    }
+    
+    
+    /// 获取包含所有点的区域
+    ///
+    /// - Parameters:
+    ///   - points: 所有的点的坐标
+    ///   - lineWidth: 线宽
+    /// - Returns: 包含所有点的区域
+    private func areaContainsPoints(points: CGPoint..., lineWidth: CGFloat) -> CGRect {
+        
+        if points.count == 0 {
+            return CGRect(x: 0, y: 0, width: 0, height: 0)
+        }
+        
+        var minX = points[0].x, minY = points[0].y, maxX = points[0].x, maxY = points[0].y
+
+        for point in points {
+            if point.x < minX {
+                minX = point.x
+            }
+            if point.y < minY {
+                minY = point.y
+            }
+            if point.x > maxX {
+                maxX = point.x
+            }
+            if point.y > maxY {
+                maxY = point.y
+            }
+        }
+        
+        return CGRect(x: minX - lineWidth * 0.5 - 1, y: minY - lineWidth * 0.5 - 1,
+                      width: maxX - minX + lineWidth + 2, height: maxY - minY + lineWidth + 2)
     }
 }
 
