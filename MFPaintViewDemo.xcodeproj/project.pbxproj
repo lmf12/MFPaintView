@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		E828FBCC1F9AF31800C74DF4 /* MFPaintView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E828FBCB1F9AF31800C74DF4 /* MFPaintView.swift */; };
 		E828FBCE1F9AF7D600C74DF4 /* MFBezierPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = E828FBCD1F9AF7D600C74DF4 /* MFBezierPath.swift */; };
+		E876CDD51FA5B9FB0083B90C /* MFBezierImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E876CDD41FA5B9FB0083B90C /* MFBezierImage.swift */; };
 		E8D615AA1F94F1740046A7CF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D615A91F94F1740046A7CF /* AppDelegate.swift */; };
 		E8D615AC1F94F1740046A7CF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D615AB1F94F1740046A7CF /* ViewController.swift */; };
 		E8D615AF1F94F1740046A7CF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E8D615AD1F94F1740046A7CF /* Main.storyboard */; };
@@ -38,6 +39,7 @@
 /* Begin PBXFileReference section */
 		E828FBCB1F9AF31800C74DF4 /* MFPaintView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MFPaintView.swift; sourceTree = "<group>"; };
 		E828FBCD1F9AF7D600C74DF4 /* MFBezierPath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MFBezierPath.swift; sourceTree = "<group>"; };
+		E876CDD41FA5B9FB0083B90C /* MFBezierImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MFBezierImage.swift; sourceTree = "<group>"; };
 		E8D615A61F94F1740046A7CF /* MFPaintViewDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MFPaintViewDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8D615A91F94F1740046A7CF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E8D615AB1F94F1740046A7CF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -135,6 +137,7 @@
 			children = (
 				E828FBCB1F9AF31800C74DF4 /* MFPaintView.swift */,
 				E828FBCD1F9AF7D600C74DF4 /* MFBezierPath.swift */,
+				E876CDD41FA5B9FB0083B90C /* MFBezierImage.swift */,
 			);
 			path = MFPaintView;
 			sourceTree = "<group>";
@@ -276,6 +279,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E876CDD51FA5B9FB0083B90C /* MFBezierImage.swift in Sources */,
 				E8D615AC1F94F1740046A7CF /* ViewController.swift in Sources */,
 				E828FBCC1F9AF31800C74DF4 /* MFPaintView.swift in Sources */,
 				E828FBCE1F9AF7D600C74DF4 /* MFBezierPath.swift in Sources */,

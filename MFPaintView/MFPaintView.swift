@@ -36,8 +36,8 @@ class MFPaintView: UIView {
     
     // MARK: - private property
     private var currentPath = MFBezierPath()
-    private var images = [UIImage]()
-    private var undoImages = [UIImage]() //被撤销的图像
+    private var images = [MFBezierImage]()
+    private var undoImages = [MFBezierImage]() //被撤销的图像
 
     // MARK: - super methods
     override init(frame: CGRect) {
@@ -52,8 +52,11 @@ class MFPaintView: UIView {
     
     override func draw(_ rect: CGRect) {
         
-        if images.count > 0 {
-            images.last?.draw(at: CGPoint.zero, blendMode: CGBlendMode.normal, alpha: 1.0)
+        for bezierImage in images {
+            if bezierImage.isEraser {
+                UIRectFillUsingBlendMode(CGRect(x: bezierImage.origin.x, y: bezierImage.origin.y, width: bezierImage.image.size.width, height: bezierImage.image.size.height), CGBlendMode.clear)
+            }
+            bezierImage.image.draw(at: bezierImage.origin, blendMode: CGBlendMode.normal, alpha: 1.0)
         }
         
         if self.currentPath.isEraser {
@@ -211,6 +214,7 @@ class MFPaintView: UIView {
     /// - Parameter event: 触摸事件
     private func drawEnd(with event: UIEvent?) {
         
+        //刷新界面
         let currentTouch = event?.allTouches?.first
         
         let currentPoint = (currentTouch?.location(in: self))!
@@ -219,17 +223,31 @@ class MFPaintView: UIView {
         let needRefreshArea = self.areaContainsPoints(points: self.currentPath.currentPoint, prePoint, currentPoint, lineWidth: self.currentPath.lineWidth)
         
         self.currentPath.addQuadCurve(to: currentPoint, controlPoint: prePoint)
-        
         self.setNeedsDisplay(needRefreshArea)
         
-        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, UIScreen.main.scale)
-        self.layer.render(in: UIGraphicsGetCurrentContext()!)
+        
+        //保存image
+        let imageRect = CGRect(x: self.currentPath.bounds.origin.x - self.currentPath.lineWidth,
+                               y: self.currentPath.bounds.origin.y - self.currentPath.lineWidth,
+                               width: self.currentPath.bounds.size.width + self.currentPath.lineWidth * 2,
+                               height: self.currentPath.bounds.size.height + self.currentPath.lineWidth * 2)
+        
+        UIGraphicsBeginImageContextWithOptions(imageRect.size, false, UIScreen.main.scale)
+        let context = UIGraphicsGetCurrentContext()
+        context?.translateBy(x: -imageRect.origin.x,
+                             y: -imageRect.origin.y)
+        self.layer.render(in: context!)
         let image = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         
-        self.images.append(image!)
+        let bezierImage = MFBezierImage(image: image!)
+        bezierImage.origin = imageRect.origin
+        bezierImage.isEraser = self.currentPath.isEraser
+        
+        self.images.append(bezierImage)
         self.currentPath.removeAllPoints()
         
+        //执行代理方法
         self.delegate?.paintViewDidFinishDrawLine(self)
     }
     
