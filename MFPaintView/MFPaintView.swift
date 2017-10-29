@@ -13,6 +13,11 @@ enum MFPaintViewBrushMode {
     case eraser
 }
 
+enum MFPaintViewStatus {
+    case normal
+    case drawing
+}
+
 protocol MFPaintViewDelegate {
     
     func paintViewDidFinishDrawLine(_ paintView: MFPaintView)
@@ -35,9 +40,11 @@ class MFPaintView: UIView {
     private var isEraserMode: Bool = false
     
     // MARK: - private property
-    private var currentPath = MFBezierPath()
-    private var images = [MFBezierImage]()
-    private var undoImages = [MFBezierImage]() //被撤销的图像
+    private var status = MFPaintViewStatus.normal
+    private var paths = [MFBezierPath]()
+    private var undoPaths = [MFBezierPath]() //被撤销的路径
+    private var currentPath: MFBezierPath?
+    private var lastImage: UIImage?
 
     // MARK: - super methods
     override init(frame: CGRect) {
@@ -50,22 +57,39 @@ class MFPaintView: UIView {
         self.commonInit()
     }
     
+    override func layerWillDraw(_ layer: CALayer) {
+        super.layerWillDraw(layer)
+
+        if self.status == MFPaintViewStatus.drawing && self.lastImage == nil {
+            self.refreshLastImage()
+        }
+    }
+    
     override func draw(_ rect: CGRect) {
         
-        for bezierImage in images {
-            if bezierImage.isEraser {
-                UIRectFillUsingBlendMode(CGRect(x: bezierImage.origin.x, y: bezierImage.origin.y, width: bezierImage.image.size.width, height: bezierImage.image.size.height), CGBlendMode.clear)
+        //正在绘画则使用画Image方式，否则使用画path方式
+        if self.status == MFPaintViewStatus.drawing && self.lastImage != nil {
+            self.lastImage?.draw(at: CGPoint.zero, blendMode: CGBlendMode.normal, alpha: 1.0)
+            if (self.currentPath?.isEraser)! {
+                UIColor.clear.set()
+                self.currentPath?.stroke(with: CGBlendMode.clear, alpha: 1.0)
             }
-            bezierImage.image.draw(at: bezierImage.origin, blendMode: CGBlendMode.normal, alpha: 1.0)
-        }
-        
-        if self.currentPath.isEraser {
-            UIColor.clear.set()
-            self.currentPath.stroke(with: CGBlendMode.clear, alpha: 1.0)
+            else {
+                self.currentPath?.lineColor.set()
+                self.currentPath?.stroke()
+            }
         }
         else {
-            self.currentPath.lineColor.set()
-            self.currentPath.stroke()
+            for path in paths {
+                if path.isEraser {
+                    UIColor.clear.set()
+                    path.stroke(with: CGBlendMode.clear, alpha: 1.0)
+                }
+                else {
+                    path.lineColor.set()
+                    path.stroke()
+                }
+            }
         }
         
         super.draw(rect)
@@ -75,16 +99,20 @@ class MFPaintView: UIView {
 
         super.touchesBegan(touches, with: event)
         
-        self.currentPath.lineColor = self.paintStrokeColor
-        self.currentPath.lineWidth = self.paintLineWidth
-        self.currentPath.isEraser = self.isEraserMode
-        self.currentPath.lineCapStyle = CGLineCap.round
-        self.currentPath.lineJoinStyle = CGLineJoin.round
-
-        self.undoImages.removeAll()
+        self.status = MFPaintViewStatus.drawing
+        
+        self.currentPath = MFBezierPath()
+        self.currentPath?.lineColor = self.paintStrokeColor
+        self.currentPath?.lineWidth = self.paintLineWidth
+        self.currentPath?.isEraser = self.isEraserMode
+        self.currentPath?.lineCapStyle = CGLineCap.round
+        self.currentPath?.lineJoinStyle = CGLineJoin.round
+        
+        self.paths.append(self.currentPath!)
+        self.undoPaths.removeAll()
         
         let point:CGPoint = (event?.allTouches?.first?.location(in: self))!
-        self.currentPath.move(to: point)
+        self.currentPath?.move(to: point)
         
         self.setNeedsDisplay()
     }
@@ -94,21 +122,20 @@ class MFPaintView: UIView {
         super.touchesMoved(touches, with: event)
         
         let currentTouch = event?.allTouches?.first
-        
         let currentPoint = (currentTouch?.location(in: self))!
         let prePoint = (currentTouch?.previousLocation(in: self))!
         let midPoint = CGPoint(x:(prePoint.x + currentPoint.x) * 0.5,
                                y: (prePoint.y + currentPoint.y) * 0.5)
         
-        let needRefreshArea = self.areaContainsPoints(points: self.currentPath.currentPoint, prePoint, midPoint, lineWidth: self.currentPath.lineWidth)
+        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, midPoint, lineWidth: (self.currentPath?.lineWidth)!)
         
-        if self.needsCorrectCurve(currentPoint: self.currentPath.currentPoint, endPoint: midPoint, controlPoint: prePoint, lineWidth: self.currentPath.lineWidth) {
+        if self.needsCorrectCurve(currentPoint: (self.currentPath?.currentPoint)!, endPoint: midPoint, controlPoint: prePoint, lineWidth: (self.currentPath?.lineWidth)!) {
                         
-            self.currentPath.addLine(to: prePoint)
-            self.currentPath.addLine(to: midPoint)
+            self.currentPath?.addLine(to: prePoint)
+            self.currentPath?.addLine(to: midPoint)
         }
         else {
-            self.currentPath.addQuadCurve(to: midPoint, controlPoint: prePoint)
+            self.currentPath?.addQuadCurve(to: midPoint, controlPoint: prePoint)
         }
  
         self.setNeedsDisplay(needRefreshArea)
@@ -135,6 +162,10 @@ class MFPaintView: UIView {
     /// - Parameter width: 画笔或橡皮擦粗细
     public func setPaintLineWidth(lineWidth width: CGFloat) {
         
+        if !(self.status == MFPaintViewStatus.normal) {
+            return
+        }
+        
         self.paintLineWidth = width
     }
 
@@ -142,6 +173,10 @@ class MFPaintView: UIView {
     ///
     /// - Parameter color: 画笔颜色
     public func setPaintLineColor(lineColor color: UIColor) {
+        
+        if !(self.status == MFPaintViewStatus.normal) {
+            return
+        }
         
         self.paintStrokeColor = color
     }
@@ -151,39 +186,56 @@ class MFPaintView: UIView {
     /// - Parameter mode: 画笔或橡皮擦
     public func setBrushMode(brushMode mode: MFPaintViewBrushMode) {
         
+        if !(self.status == MFPaintViewStatus.normal) {
+            return
+        }
+        
         self.isEraserMode = mode == .eraser
     }
     
     /// 清除画板
     public func cleanup() {
         
-        self.currentPath.removeAllPoints()
-        self.images.removeAll()
-        self.undoImages.removeAll()
+        if !(self.status == MFPaintViewStatus.normal) {
+            return
+        }
+        
+        self.lastImage = nil
+        self.paths.removeAll()
+        self.undoPaths.removeAll()
         self.setNeedsDisplay()
     }
     
     /// 撤销上一步操作
     public func undo() {
     
+        if !(self.status == MFPaintViewStatus.normal) {
+            return
+        }
+        
         if !self.canUndo() {
             return
         }
         
-        let image = self.images.removeLast()
-        self.undoImages.append(image)
+        let path = self.paths.removeLast()
+        self.undoPaths.append(path)
+        self.lastImage = nil
         self.setNeedsDisplay()
     }
     
     /// 重做撤销的操作
     public func redo() {
         
+        if !(self.status == MFPaintViewStatus.normal) {
+            return
+        }
+        
         if !self.canRedo() {
             return
         }
         
-        let image = self.undoImages.removeLast()
-        self.images.append(image)
+        let path = self.undoPaths.removeLast()
+        self.paths.append(path)
         self.setNeedsDisplay()
     }
     
@@ -192,7 +244,7 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     public func canUndo() -> Bool {
     
-        return self.images.count > 0
+        return self.status == MFPaintViewStatus.normal && self.paths.count > 0
     }
     
     /// 是否可以进行重做
@@ -200,10 +252,12 @@ class MFPaintView: UIView {
     /// - Returns: 是或否
     public func canRedo() -> Bool {
     
-        return self.undoImages.count > 0
+        return self.status == MFPaintViewStatus.normal &&  self.undoPaths.count > 0
     }
     
     // MARK: - private methods
+    
+    /// 初始化
     private func commonInit() {
         
         self.backgroundColor = UIColor.clear
@@ -214,41 +268,30 @@ class MFPaintView: UIView {
     /// - Parameter event: 触摸事件
     private func drawEnd(with event: UIEvent?) {
         
-        //刷新界面
         let currentTouch = event?.allTouches?.first
-        
         let currentPoint = (currentTouch?.location(in: self))!
         let prePoint = (currentTouch?.previousLocation(in: self))!
         
-        let needRefreshArea = self.areaContainsPoints(points: self.currentPath.currentPoint, prePoint, currentPoint, lineWidth: self.currentPath.lineWidth)
+        let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, currentPoint, lineWidth: (self.currentPath?.lineWidth)!)
         
-        self.currentPath.addQuadCurve(to: currentPoint, controlPoint: prePoint)
+        self.currentPath?.addQuadCurve(to: currentPoint, controlPoint: prePoint)
+        
         self.setNeedsDisplay(needRefreshArea)
         
+        self.refreshLastImage()
         
-        //保存image
-        let imageRect = CGRect(x: self.currentPath.bounds.origin.x - self.currentPath.lineWidth,
-                               y: self.currentPath.bounds.origin.y - self.currentPath.lineWidth,
-                               width: self.currentPath.bounds.size.width + self.currentPath.lineWidth * 2,
-                               height: self.currentPath.bounds.size.height + self.currentPath.lineWidth * 2)
+        self.status = MFPaintViewStatus.normal
         
-        UIGraphicsBeginImageContextWithOptions(imageRect.size, false, UIScreen.main.scale)
-        let context = UIGraphicsGetCurrentContext()
-        context?.translateBy(x: -imageRect.origin.x,
-                             y: -imageRect.origin.y)
-        self.layer.render(in: context!)
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        let bezierImage = MFBezierImage(image: image!)
-        bezierImage.origin = imageRect.origin
-        bezierImage.isEraser = self.currentPath.isEraser
-        
-        self.images.append(bezierImage)
-        self.currentPath.removeAllPoints()
-        
-        //执行代理方法
         self.delegate?.paintViewDidFinishDrawLine(self)
+    }
+    
+    /// 更新上次绘画完成的的Image
+    private func refreshLastImage() {
+        
+        UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, UIScreen.main.scale)
+        self.layer.render(in: UIGraphicsGetCurrentContext()!)
+        self.lastImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
     }
     
     /// 检查贝塞尔曲线角度是否过小，过小则需要修正
