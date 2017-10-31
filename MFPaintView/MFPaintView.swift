@@ -57,6 +57,7 @@ class MFPaintView: UIView {
         self.commonInit()
     }
     
+    @available(iOS 10.0, *)
     override func layerWillDraw(_ layer: CALayer) {
         super.layerWillDraw(layer)
 
