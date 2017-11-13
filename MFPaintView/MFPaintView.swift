@@ -20,6 +20,8 @@ enum MFPaintViewStatus {
 
 protocol MFPaintViewDelegate {
     
+    func paintViewWillBeginDrawLine(_ paintView: MFPaintView)
+    
     func paintViewDidFinishDrawLine(_ paintView: MFPaintView)
 }
 
@@ -101,6 +103,7 @@ class MFPaintView: UIView {
         super.touchesBegan(touches, with: event)
         
         self.status = MFPaintViewStatus.drawing
+        self.delegate?.paintViewWillBeginDrawLine(self)
         
         self.currentPath = MFBezierPath()
         self.currentPath?.lineColor = self.paintStrokeColor
