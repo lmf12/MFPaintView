@@ -259,6 +259,17 @@ class MFPaintView: UIView {
         return self.status == MFPaintViewStatus.normal &&  self.undoPaths.count > 0
     }
     
+    /// 获取快照
+    ///
+    /// - Returns: 当前绘画的快照
+    public func snapshot() -> UIImage? {
+        
+        if self.status == MFPaintViewStatus.normal {
+            self.refreshLastImage()
+        }
+        return self.lastImage
+    }
+    
     // MARK: - private methods
     
     /// 初始化
