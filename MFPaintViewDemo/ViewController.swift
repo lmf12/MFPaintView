@@ -76,6 +76,10 @@ class ViewController: UIViewController, MFPaintViewDelegate {
         self.refreshUndoAndRedoState()
     }
     
+    func paintViewWillBeginDrawLine(_ paintView: MFPaintView) {
+        
+    }
+    
     // MARK: - private methods
     private func refreshUndoAndRedoState() {
     
