@@ -197,6 +197,15 @@ class MFPaintView: UIView {
         self.isEraserMode = mode == .eraser
     }
     
+    
+    /// 获取当前的笔刷模式
+    ///
+    /// - Returns: 当前的笔刷模式
+    public func brushMode() -> MFPaintViewBrushMode {
+        
+        return self.isEraserMode ? .eraser : .paint
+    }
+    
     /// 清除画板
     public func cleanup() {
         
