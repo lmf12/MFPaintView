@@ -115,7 +115,8 @@ class MFPaintView: UIView {
         self.paths.append(self.currentPath!)
         self.undoPaths.removeAll()
         
-        let point:CGPoint = (event?.allTouches?.first?.location(in: self))!
+        var point = (event?.allTouches?.first?.location(in: self))!
+        point = self.pointWithOffset(point: point)
         self.currentPath?.move(to: point)
         
         self.setNeedsDisplay()
@@ -126,8 +127,10 @@ class MFPaintView: UIView {
         super.touchesMoved(touches, with: event)
         
         let currentTouch = event?.allTouches?.first
-        let currentPoint = (currentTouch?.location(in: self))!
-        let prePoint = (currentTouch?.previousLocation(in: self))!
+        var currentPoint = (currentTouch?.location(in: self))!
+        currentPoint = self.pointWithOffset(point: currentPoint)
+        var prePoint = (currentTouch?.previousLocation(in: self))!
+        prePoint = self.pointWithOffset(point: prePoint)
         let midPoint = CGPoint(x:(prePoint.x + currentPoint.x) * 0.5,
                                y: (prePoint.y + currentPoint.y) * 0.5)
         
@@ -279,6 +282,16 @@ class MFPaintView: UIView {
         return self.lastImage
     }
     
+    
+    /// 获取偏移后的点
+    ///
+    /// - Parameter point: 原始点
+    /// - Returns: 偏移后的点
+    public func pointWithOffset(point: CGPoint) -> CGPoint {
+        
+        return point
+    }
+    
     // MARK: - private methods
     
     /// 初始化
@@ -293,8 +306,10 @@ class MFPaintView: UIView {
     private func drawEnd(with event: UIEvent?) {
         
         let currentTouch = event?.allTouches?.first
-        let currentPoint = (currentTouch?.location(in: self))!
-        let prePoint = (currentTouch?.previousLocation(in: self))!
+        var currentPoint = (currentTouch?.location(in: self))!
+        currentPoint = self.pointWithOffset(point: currentPoint)
+        var prePoint = (currentTouch?.previousLocation(in: self))!
+        prePoint = self.pointWithOffset(point: prePoint)
         
         let needRefreshArea = self.areaContainsPoints(points: (self.currentPath?.currentPoint)!, prePoint, currentPoint, lineWidth: (self.currentPath?.lineWidth)!)
         
