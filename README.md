@@ -1,5 +1,8 @@
 # MFPaintView
 一个基于Quartz2D实现的画板，适用于Swift3.0以上版本。
+
+> 如果你正在寻找一个 OpenGL ES 实现的版本，或许可以参考一下我的 [另一个项目](https://github.com/lmf12/GLPaintView) 。
+
 ![](https://raw.githubusercontent.com/lmf12/MFPaintView/master/exhibition.gif)
 
 ## 如何导入
