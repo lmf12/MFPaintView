@@ -3,7 +3,7 @@
 
 > 如果你正在寻找一个 OpenGL ES 实现的版本，或许可以参考一下我的 [另一个项目](https://github.com/lmf12/GLPaintView) 。
 
-![](https://raw.githubusercontent.com/lmf12/MFPaintView/master/exhibition.gif)
+![](https://github.com/lmf12/ImageHost/blob/master/MFPaintView/exhibition.gif)
 
 ## 如何导入
 #### 手动导入
@@ -82,11 +82,11 @@ public func cleanup()
 ## 性能优化
 #### 1. 使用贝塞尔曲线解决连接点不平滑问题
 一般画线功能的实现，是通过将上次触摸点坐标与当前触摸点坐标相连。但如果在性能较差的机器上，当手指的移动速度过快时，触摸点之间的距离较大时，线条会出现明显的转折点，如下图所示。这里采用了贝塞尔曲线进行优化，以曲线的上个结束点作为起点，上次的触摸点作为控制点，上次触摸点与本次触摸点的中点作为结束点，来绘制贝塞尔曲线，从而使线条更加平滑。
-![](https://raw.githubusercontent.com/lmf12/MFPaintView/master/image1.jpg)
+![](https://github.com/lmf12/ImageHost/blob/master/MFPaintView/image1.jpg)
 
 #### 2. 当夹角过小时，贝塞尔曲线转角不平滑
 使用贝塞尔曲线来绘制线条会带来额外的问题，即当起始点、控制点、结束点三点构成的角度过小时，在曲线的转角处会出现平角，如下图所示。此时path的JoinStyle并不起作用，因此在连线时进行角度判定，若角度过小，则直接采取线段连接的方式，这样能保证拐角的平滑。
-![](https://raw.githubusercontent.com/lmf12/MFPaintView/master/image2.jpg)
+![](https://github.com/lmf12/ImageHost/blob/master/MFPaintView/image2.jpg)
 
 #### 3. 有效减少CPU和内存的占用
 ###### 1. 将全局刷新改为局部刷新
